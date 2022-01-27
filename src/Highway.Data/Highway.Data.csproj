@@ -19,13 +19,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="..\images\icon.png" Pack="true" PackagePath="\"/>
+		<None Include="..\images\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 
 	<ItemGroup>
 		<PackageReference Include="Highway.Pavement" Version="7.0.2" />
-		<PackageReference Include="System.Reflection.Emit" Version="4.6.0" />
+		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
 	</ItemGroup>
 
 </Project>
