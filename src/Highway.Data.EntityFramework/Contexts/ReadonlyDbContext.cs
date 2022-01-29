@@ -1,47 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure;
-using System.Data.Entity.Validation;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Common.Logging;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace Highway.Data
 {
     internal class ReadonlyDbContext : DbContext
     {
-        private readonly bool _databaseFirst;
+        private readonly string _connectionString;
 
         private readonly ILog _log;
 
         private readonly IMappingConfiguration _mapping;
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer(_connectionString);
+        }
+
         public ReadonlyDbContext(string connectionString, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
-            : base(connectionString)
         {
+            _connectionString = connectionString;
             _log = log;
             _mapping = mapping;
-            Database.Log = _log.Debug;
-            contextConfiguration?.ConfigureContext(this);
-        }
-
-        public ReadonlyDbContext(string databaseFirstConnectionString, ILog log)
-            : base(databaseFirstConnectionString)
-        {
-            _databaseFirst = true;
-            _log = log;
-        }
-
-        public ReadonlyDbContext(DbConnection dbConnection, bool contextOwnsConnection, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
-            : base(dbConnection, contextOwnsConnection)
-        {
-            _log = log;
-            _mapping = mapping;
-            Database.Log = _log.Debug;
             contextConfiguration?.ConfigureContext(this);
         }
 
@@ -50,7 +35,7 @@ namespace Highway.Data
             throw new NotImplementedException($"Do not call {nameof(SaveChanges)} on a {nameof(ReadonlyDbContext)}.");
         }
 
-        public sealed override Task<int> SaveChangesAsync()
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = new CancellationToken())
         {
             throw new NotImplementedException($"Do not call {nameof(SaveChangesAsync)} on a {nameof(ReadonlyDbContext)}.");
         }
@@ -65,18 +50,9 @@ namespace Highway.Data
             throw new NotImplementedException($"Do not call {nameof(Set)} on a {nameof(ReadonlyDbContext)}.");
         }
 
-        public sealed override DbSet Set(Type entityType)
+        public override DbSet<TEntity> Set<TEntity>(string name)
         {
             throw new NotImplementedException($"Do not call {nameof(Set)} on a {nameof(ReadonlyDbContext)}.");
-        }
-
-        public IEnumerable<T> ExecuteSqlQuery<T>(string sql, params DbParameter[] dbParams)
-        {
-            var parameters = dbParams.Select(x => $"{x.ParameterName} : {x.Value} : {x.DbType}\t").ToArray();
-
-            _log.Trace($"Executing SQL {sql}, with parameters {string.Join(",", parameters)}");
-
-            return Database.SqlQuery<T>(sql, dbParams);
         }
 
         internal DbSet<TEntity> InnerSet<TEntity>()
@@ -105,13 +81,8 @@ namespace Highway.Data
         ///     classes directly.
         /// </remarks>
         /// <param name="modelBuilder">The builder that defines the model for the context being created</param>
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            if (_databaseFirst)
-            {
-                throw new UnintentionalCodeFirstException();
-            }
-
             _log.Debug("\tOnModelCreating");
             if (_mapping != null)
             {
@@ -120,16 +91,6 @@ namespace Highway.Data
             }
 
             base.OnModelCreating(modelBuilder);
-        }
-
-        protected sealed override bool ShouldValidateEntity(DbEntityEntry entityEntry)
-        {
-            throw new NotImplementedException($"Do not call {nameof(ShouldValidateEntity)} on a {nameof(ReadonlyDbContext)}.");
-        }
-
-        protected sealed override DbEntityValidationResult ValidateEntity(DbEntityEntry entityEntry, IDictionary<object, object> items)
-        {
-            throw new NotImplementedException($"Do not call {nameof(ValidateEntity)} on a {nameof(ReadonlyDbContext)}.");
         }
     }
 }

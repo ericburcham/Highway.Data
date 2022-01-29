@@ -1,4 +1,4 @@
-﻿using System.Data.Entity;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Highway.Data
 {
@@ -11,6 +11,6 @@ namespace Highway.Data
         ///     This method takes the modelBuilder from Entity Framework and wires in the mappings provided
         /// </summary>
         /// <param name="modelBuilder">The Database model builder used by Entity Framework to generate the model</param>
-        void ConfigureModelBuilder(DbModelBuilder modelBuilder);
+        void ConfigureModelBuilder(ModelBuilder modelBuilder);
     }
 }

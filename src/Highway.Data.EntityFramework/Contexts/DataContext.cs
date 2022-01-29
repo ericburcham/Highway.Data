@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Data.Entity;
-using System.Data.Entity.Core.Objects;
-using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,6 +8,9 @@ using Common.Logging.Simple;
 using Highway.Data.EntityFramework;
 using Highway.Data.Interceptors.Events;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+
 namespace Highway.Data
 {
     /// <summary>
@@ -20,7 +18,7 @@ namespace Highway.Data
     /// </summary>
     public class DataContext : DbContext, IEntityDataContext
     {
-        private readonly bool _databaseFirst;
+        private readonly string _connectionString;
 
         private readonly ILog _log;
 
@@ -76,106 +74,10 @@ namespace Highway.Data
             IMappingConfiguration mapping,
             IContextConfiguration contextConfiguration,
             ILog log)
-            : base(connectionString)
         {
+            _connectionString = connectionString;
             _mapping = mapping;
             _log = log;
-            Database.Log = _log.Debug;
-            if (contextConfiguration != null)
-            {
-                contextConfiguration.ConfigureContext(this);
-            }
-        }
-
-        /// <summary>
-        ///     Database first way to construct the data context for Highway.Data.EntityFramework
-        /// </summary>
-        /// <param name="databaseFirstConnectionString">
-        ///     The metadata embedded connection string from database first Entity
-        ///     Framework
-        /// </param>
-        public DataContext(string databaseFirstConnectionString)
-            : this(databaseFirstConnectionString, new NoOpLogger())
-        {
-        }
-
-        /// <summary>
-        ///     Database first way to construct the data context for Highway.Data.EntityFramework
-        /// </summary>
-        /// <param name="databaseFirstConnectionString">
-        ///     The metadata embedded connection string from database first Entity
-        ///     Framework
-        /// </param>
-        /// <param name="log">The logger for the database first context</param>
-        public DataContext(string databaseFirstConnectionString, ILog log)
-            : base(databaseFirstConnectionString)
-        {
-            _databaseFirst = true;
-            _log = log;
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="DataContext" /> class.
-        /// </summary>
-        /// <param name="dbConnection">The db connection.</param>
-        /// <param name="contextOwnsConnection">The context owns connection.</param>
-        /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        public DataContext(DbConnection dbConnection, bool contextOwnsConnection, IMappingConfiguration mapping)
-            : this(dbConnection, contextOwnsConnection, mapping, new DefaultContextConfiguration(), new NoOpLogger())
-        {
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="DataContext" /> class.
-        /// </summary>
-        /// <param name="dbConnection">The db connection.</param>
-        /// <param name="contextOwnsConnection">The context owns connection.</param>
-        /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        /// <param name="log">The logger being supplied for this context ( Optional )</param>
-        public DataContext(
-            DbConnection dbConnection,
-            bool contextOwnsConnection,
-            IMappingConfiguration mapping,
-            ILog log)
-            : this(dbConnection, contextOwnsConnection, mapping, new DefaultContextConfiguration(), log)
-        {
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="DataContext" /> class.
-        /// </summary>
-        /// <param name="dbConnection">The db connection.</param>
-        /// <param name="contextOwnsConnection">The context owns connection.</param>
-        /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        /// <param name="contextConfiguration">The context specific configuration that will change context level behavior</param>
-        public DataContext(
-            DbConnection dbConnection,
-            bool contextOwnsConnection,
-            IMappingConfiguration mapping,
-            IContextConfiguration contextConfiguration)
-            : this(dbConnection, contextOwnsConnection, mapping, contextConfiguration, new NoOpLogger())
-        {
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="DataContext" /> class.
-        /// </summary>
-        /// <param name="dbConnection">The db connection.</param>
-        /// <param name="contextOwnsConnection">The context owns connection.</param>
-        /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        /// <param name="contextConfiguration">The context specific configuration that will change context level behavior</param>
-        /// <param name="log">The logger being supplied for this context ( Optional )</param>
-        public DataContext(
-            DbConnection dbConnection,
-            bool contextOwnsConnection,
-            IMappingConfiguration mapping,
-            IContextConfiguration contextConfiguration,
-            ILog log)
-            : base(dbConnection, contextOwnsConnection)
-        {
-            _mapping = mapping;
-            _log = log;
-            Database.Log = _log.Debug;
             if (contextConfiguration != null)
             {
                 contextConfiguration.ConfigureContext(this);
@@ -292,55 +194,6 @@ namespace Highway.Data
         }
 
         /// <summary>
-        /// </summary>
-        /// <param name="procedureName"></param>
-        /// <param name="dbParams"></param>
-        /// <returns></returns>
-        public virtual int ExecuteFunction(string procedureName, params ObjectParameter[] dbParams)
-        {
-            var parameters =
-                dbParams.Select(x => $"{x.Name} : {x.Value} : {x.ParameterType}\t").ToArray();
-
-            _log.TraceFormat("Executing Procedure {0}, with parameters {1}", procedureName, string.Join(",", parameters));
-
-            return Database.SqlQuery<int>(procedureName, dbParams).FirstOrDefault();
-        }
-
-        /// <summary>
-        ///     Executes a SQL command and returns the standard int return from the query
-        /// </summary>
-        /// <param name="sql">The Sql Statement</param>
-        /// <param name="dbParams">A List of Database Parameters for the Query</param>
-        /// <returns>The rows affected</returns>
-        public virtual int ExecuteSqlCommand(string sql, params DbParameter[] dbParams)
-        {
-            var parameters =
-                dbParams.Select(x => $"{x.ParameterName} : {x.Value} : {x.DbType}\t").ToArray();
-
-            _log.TraceFormat("Executing SQL {0}, with parameters {1}", sql, string.Join(",", parameters));
-
-            return Database.ExecuteSqlCommand(sql, dbParams);
-        }
-
-        /// <summary>
-        ///     Executes a SQL command and tries to map the returned dataset into an <see cref="IEnumerable{T}" />
-        ///     The results should have the same column names as the Entity Type has properties
-        /// </summary>
-        /// <typeparam name="T">The Entity Type that the return should be mapped to</typeparam>
-        /// <param name="sql">The Sql Statement</param>
-        /// <param name="dbParams">A List of Database Parameters for the Query</param>
-        /// <returns>An <see cref="IEnumerable{T}" /> from the query return</returns>
-        public virtual IEnumerable<T> ExecuteSqlQuery<T>(string sql, params DbParameter[] dbParams)
-        {
-            var parameters =
-                dbParams.Select(x => $"{x.ParameterName} : {x.Value} : {x.DbType}\t").ToArray();
-
-            _log.TraceFormat("Executing SQL {0}, with parameters {1}", sql, string.Join(",", parameters));
-
-            return Database.SqlQuery<T>(sql, dbParams);
-        }
-
-        /// <summary>
         ///     Reloads the provided instance of <typeparamref name="T" /> from the database
         /// </summary>
         /// <typeparam name="T">The Entity Type being reloaded</typeparam>
@@ -402,7 +255,7 @@ namespace Highway.Data
             return item;
         }
 
-        protected virtual DbEntityEntry<T> GetChangeTrackingEntry<T>(T item)
+        protected virtual EntityEntry<T> GetChangeTrackingEntry<T>(T item)
             where T : class
         {
             return Entry(item);
@@ -416,6 +269,11 @@ namespace Highway.Data
         protected void OnBeforeSave()
         {
             BeforeSave?.Invoke(this, new BeforeSave());
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer(_connectionString);
         }
 
         /// <summary>
@@ -434,13 +292,8 @@ namespace Highway.Data
         ///     classes directly.
         /// </remarks>
         /// <param name="modelBuilder">The builder that defines the model for the context being created</param>
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            if (_databaseFirst)
-            {
-                throw new UnintentionalCodeFirstException();
-            }
-
             _log.Debug("\tOnModelCreating");
             if (_mapping != null)
             {

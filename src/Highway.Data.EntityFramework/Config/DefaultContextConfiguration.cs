@@ -1,4 +1,4 @@
-﻿using System.Data.Entity;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Highway.Data
 {
@@ -13,8 +13,7 @@ namespace Highway.Data
         /// <param name="context"></param>
         public void ConfigureContext(DbContext context)
         {
-            context.Configuration.LazyLoadingEnabled = false;
-            context.Configuration.ProxyCreationEnabled = false;
+            context.ChangeTracker.LazyLoadingEnabled = false;
         }
     }
 }
