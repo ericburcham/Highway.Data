@@ -4,7 +4,7 @@ using Highway.Data.EventManagement.Interfaces;
 
 namespace Highway.Data.EntityFramework.ReadonlyTests
 {
-    public class SchoolDomain : IDomain
+    public class Domain : IDomain
     {
         public string ConnectionString { get; } = Configuration.Instance.TestDatabaseConnectionString;
 
@@ -12,6 +12,6 @@ namespace Highway.Data.EntityFramework.ReadonlyTests
 
         public List<IInterceptor> Events { get; } = new();
 
-        public IMappingConfiguration Mappings { get; } = new SchoolMapping();
+        public IMappingConfiguration Mappings { get; } = new MappingConfiguration();
     }
 }

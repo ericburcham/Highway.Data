@@ -14,7 +14,7 @@ namespace Highway.Data.EntityFrameworkCore.ReadonlyTests
         private static ReadonlyDbContext _target;
 
         [ClassInitialize]
-        public static void ClassInit(TestContext context)
+        public static void ClassInitialize(TestContext context)
         {
             _target = new ReadonlyDbContext();
         }

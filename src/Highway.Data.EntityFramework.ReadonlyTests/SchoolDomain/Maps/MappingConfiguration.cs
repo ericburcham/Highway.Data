@@ -2,7 +2,7 @@
 
 namespace Highway.Data.EntityFramework.ReadonlyTests
 {
-    public class SchoolMapping : IMappingConfiguration
+    public class MappingConfiguration : IMappingConfiguration
     {
         public void ConfigureModelBuilder(DbModelBuilder modelBuilder)
         {

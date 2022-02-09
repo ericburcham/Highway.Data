@@ -14,7 +14,7 @@ namespace Highway.Data.EntityFramework.ReadonlyTests
         private static ReadonlyDbContext _target;
 
         [ClassInitialize]
-        public static void ClassInit(TestContext context)
+        public static void ClassInitialize(TestContext context)
         {
             _target = new ReadonlyDbContext(Configuration.Instance.TestDatabaseConnectionString, new NoOpLogger());
         }

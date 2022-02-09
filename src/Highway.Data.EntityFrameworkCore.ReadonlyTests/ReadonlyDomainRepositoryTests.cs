@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Linq;
 
-using FluentAssertions;
-
-using Highway.Data.Factories;
+using Highway.Data.EntityFrameworkCore.Interfaces;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Highway.Data.EntityFramework.ReadonlyTests
+namespace Highway.Data.EntityFrameworkCore.ReadonlyTests
 {
     [TestClass]
     public class ReadonlyDomainRepositoryTests
@@ -46,15 +43,11 @@ namespace Highway.Data.EntityFramework.ReadonlyTests
         [TestMethod]
         public void CanExecuteQuery()
         {
-            var students = _target.Find(new GetStudents()).ToList();
-            students.Count.Should().BeGreaterThan(0);
         }
 
         [TestMethod]
         public void CanExecuteScalar()
         {
-            var bill = _target.Find(new GetStudentByName("Bill"));
-            bill.Grade.Name.Should().Be("first");
         }
     }
 }
