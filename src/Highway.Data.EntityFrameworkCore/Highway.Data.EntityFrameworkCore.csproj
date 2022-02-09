@@ -22,4 +22,8 @@
 		<None Include="..\images\icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.14" />
+	</ItemGroup>
+
 </Project>
