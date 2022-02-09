@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Highway.Data.ReadonlyTests
+namespace Highway.Data.EntityFramework.ReadonlyTests
 {
     public class Student
     {

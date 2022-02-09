@@ -1,6 +1,6 @@
 ﻿using System.Data.Entity.ModelConfiguration;
 
-namespace Highway.Data.ReadonlyTests
+namespace Highway.Data.EntityFramework.ReadonlyTests
 {
     public class GradeMap : EntityTypeConfiguration<Grade>
     {

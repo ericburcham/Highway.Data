@@ -1,6 +1,6 @@
 ﻿using System.Data.Entity;
 
-namespace Highway.Data.ReadonlyTests
+namespace Highway.Data.EntityFramework.ReadonlyTests
 {
     internal class GetStudents : Query<Student>
     {

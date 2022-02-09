@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Highway.Data.ReadonlyTests
+namespace Highway.Data.EntityFramework.ReadonlyTests
 {
     internal class Configuration
     {

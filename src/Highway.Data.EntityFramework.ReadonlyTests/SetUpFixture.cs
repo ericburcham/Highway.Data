@@ -3,7 +3,7 @@ using System.Data.SqlClient;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Highway.Data.ReadonlyTests
+namespace Highway.Data.EntityFramework.ReadonlyTests
 {
     [TestClass]
     public class SetUpFixture
