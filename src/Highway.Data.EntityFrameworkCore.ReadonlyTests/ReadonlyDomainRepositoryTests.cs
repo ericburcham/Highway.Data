@@ -1,5 +1,6 @@
 ﻿using System;
 
+using Highway.Data.EntityFrameworkCore.Factories;
 using Highway.Data.EntityFrameworkCore.Interfaces;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;

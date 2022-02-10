@@ -4,9 +4,11 @@ using Highway.Data.EventManagement.Interfaces;
 
 namespace Highway.Data.EntityFrameworkCore.Interfaces
 {
-    internal interface IDomain
+    public interface IDomain
     {
         string ConnectionString { get; }
+
+        // IContextConfiguration ContextConfiguration { get; }
 
         List<IInterceptor> Events { get; }
 

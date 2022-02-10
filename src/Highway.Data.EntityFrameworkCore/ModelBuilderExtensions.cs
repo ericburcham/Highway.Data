@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Highway.Data.EntityFrameworkCore
 {
@@ -12,11 +11,5 @@ namespace Highway.Data.EntityFrameworkCore
         {
             modelBuilder.Entity<TEntity>(entityConfiguration.Configure);
         }
-    }
-
-    public abstract class EntityTypeConfiguration<T>
-        where T : class
-    {
-        public abstract void Configure(EntityTypeBuilder<T> builder);
     }
 }

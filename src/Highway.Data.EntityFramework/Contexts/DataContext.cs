@@ -245,11 +245,11 @@ namespace Highway.Data
             OnBeforeSave();
             _log.Trace("\tCommit");
             ChangeTracker.DetectChanges();
-            var result = SaveChanges();
-            _log.DebugFormat("\tCommitted {0} Changes", result);
+            var results = SaveChanges();
+            _log.DebugFormat("\tCommitted {0} Changes", results);
             OnAfterSave();
 
-            return result;
+            return results;
         }
 
         /// <summary>
@@ -261,11 +261,11 @@ namespace Highway.Data
             OnBeforeSave();
             _log.Trace("\tCommit");
             ChangeTracker.DetectChanges();
-            var result = await SaveChangesAsync();
-            _log.DebugFormat("\tCommitted {0} Changes", result);
+            var results = await SaveChangesAsync();
+            _log.DebugFormat("\tCommitted {0} Changes", results);
             OnAfterSave();
 
-            return result;
+            return results;
         }
 
         /// <summary>

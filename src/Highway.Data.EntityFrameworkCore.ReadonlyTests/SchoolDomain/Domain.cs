@@ -7,7 +7,9 @@ namespace Highway.Data.EntityFrameworkCore.ReadonlyTests
 {
     internal class Domain : IDomain
     {
-        public string ConnectionString { get; }
+        public string ConnectionString { get; } = Configuration.Instance.TestDatabaseConnectionString;
+
+        // public IContextConfiguration ContextConfiguration { get; } = new DefaultContextConfiguration();
 
         public List<IInterceptor> Events { get; } = new();
 
