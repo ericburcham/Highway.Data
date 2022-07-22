@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Common.Logging;
 using Common.Logging.Simple;
 
-using Highway.Data.EntityFramework;
 using Highway.Data.Interceptors.Events;
 
 namespace Highway.Data
@@ -18,13 +17,9 @@ namespace Highway.Data
     /// <summary>
     ///     A base implementation of the Code First Data DataContext for Entity Framework
     /// </summary>
-    public class DataContext : DbContext, IEntityDataContext
+    public class DataContext : IEntityDataContext
     {
-        private readonly bool _databaseFirst;
-
-        private readonly ILog _log;
-
-        private readonly IMappingConfiguration _mapping;
+        private readonly HighwayDbContext _context;
 
         /// <summary>
         ///     Constructs a context
@@ -76,15 +71,8 @@ namespace Highway.Data
             IMappingConfiguration mapping,
             IContextConfiguration contextConfiguration,
             ILog log)
-            : base(connectionString)
         {
-            _mapping = mapping;
-            _log = log;
-            Database.Log = _log.Debug;
-            if (contextConfiguration != null)
-            {
-                contextConfiguration.ConfigureContext(this);
-            }
+            _context = new HighwayDbContext(connectionString, mapping, contextConfiguration, log);
         }
 
         /// <summary>
@@ -108,10 +96,8 @@ namespace Highway.Data
         /// </param>
         /// <param name="log">The logger for the database first context</param>
         public DataContext(string databaseFirstConnectionString, ILog log)
-            : base(databaseFirstConnectionString)
         {
-            _databaseFirst = true;
-            _log = log;
+            _context = new HighwayDbContext(databaseFirstConnectionString, log);
         }
 
         /// <summary>
@@ -171,15 +157,8 @@ namespace Highway.Data
             IMappingConfiguration mapping,
             IContextConfiguration contextConfiguration,
             ILog log)
-            : base(dbConnection, contextOwnsConnection)
         {
-            _mapping = mapping;
-            _log = log;
-            Database.Log = _log.Debug;
-            if (contextConfiguration != null)
-            {
-                contextConfiguration.ConfigureContext(this);
-            }
+            _context = new HighwayDbContext(dbConnection, contextOwnsConnection, mapping, contextConfiguration, log);
         }
 
         public event EventHandler<BeforeSave> BeforeSave;
@@ -195,9 +174,9 @@ namespace Highway.Data
         public virtual T Add<T>(T item)
             where T : class
         {
-            _log.DebugFormat("Adding Object {0}", item);
-            Set<T>().Add(item);
-            _log.TraceFormat("Added Object {0}", item);
+            _context.Log.DebugFormat("Adding Object {0}", item);
+            _context.Set<T>().Add(item);
+            _context.Log.TraceFormat("Added Object {0}", item);
 
             return item;
         }
@@ -213,9 +192,9 @@ namespace Highway.Data
         public virtual IQueryable<T> AsQueryable<T>()
             where T : class
         {
-            _log.DebugFormat("Querying Object {0}", typeof(T).Name);
-            var result = Set<T>();
-            _log.TraceFormat("Queried Object {0}", typeof(T).Name);
+            _context.Log.DebugFormat("Querying Object {0}", typeof(T).Name);
+            var result = _context.Set<T>();
+            _context.Log.TraceFormat("Queried Object {0}", typeof(T).Name);
 
             return result;
         }
@@ -229,9 +208,9 @@ namespace Highway.Data
         public virtual T Attach<T>(T item)
             where T : class
         {
-            _log.DebugFormat("Attaching Object {0}", item);
-            Set<T>().Attach(item);
-            _log.TraceFormat("Attached Object {0}", item);
+            _context.Log.DebugFormat("Attaching Object {0}", item);
+            _context.Set<T>().Attach(item);
+            _context.Log.TraceFormat("Attached Object {0}", item);
 
             return item;
         }
@@ -243,10 +222,10 @@ namespace Highway.Data
         public virtual int Commit()
         {
             OnBeforeSave();
-            _log.Trace("\tCommit");
-            ChangeTracker.DetectChanges();
-            var result = SaveChanges();
-            _log.DebugFormat("\tCommitted {0} Changes", result);
+            _context.Log.Trace("\tCommit");
+            _context.ChangeTracker.DetectChanges();
+            var result = _context.SaveChanges();
+            _context.Log.DebugFormat("\tCommitted {0} Changes", result);
             OnAfterSave();
 
             return result;
@@ -259,10 +238,10 @@ namespace Highway.Data
         public virtual async Task<int> CommitAsync()
         {
             OnBeforeSave();
-            _log.Trace("\tCommit");
-            ChangeTracker.DetectChanges();
-            var result = await SaveChangesAsync();
-            _log.DebugFormat("\tCommitted {0} Changes", result);
+            _context.Log.Trace("\tCommit");
+            _context.ChangeTracker.DetectChanges();
+            var result = await _context.SaveChangesAsync();
+            _context.Log.DebugFormat("\tCommitted {0} Changes", result);
             OnAfterSave();
 
             return result;
@@ -277,18 +256,23 @@ namespace Highway.Data
         public virtual T Detach<T>(T item)
             where T : class
         {
-            _log.TraceFormat("Retrieving State Entry For Object {0}", item);
+            _context.Log.TraceFormat("Retrieving State Entry For Object {0}", item);
             var entry = GetChangeTrackingEntry(item);
-            _log.DebugFormat("Detaching Object {0}", item);
+            _context.Log.DebugFormat("Detaching Object {0}", item);
             if (entry == null)
             {
                 throw new InvalidOperationException("Cannot detach an object that is not attached to the current context.");
             }
 
             entry.State = EntityState.Detached;
-            _log.TraceFormat("Detached Object {0}", item);
+            _context.Log.TraceFormat("Detached Object {0}", item);
 
             return item;
+        }
+
+        public void Dispose()
+        {
+            _context?.Dispose();
         }
 
         /// <summary>
@@ -301,9 +285,9 @@ namespace Highway.Data
             var parameters =
                 dbParams.Select(x => $"{x.Name} : {x.Value} : {x.ParameterType}\t").ToArray();
 
-            _log.TraceFormat("Executing Procedure {0}, with parameters {1}", procedureName, string.Join(",", parameters));
+            _context.Log.TraceFormat("Executing Procedure {0}, with parameters {1}", procedureName, string.Join(",", parameters));
 
-            return Database.SqlQuery<int>(procedureName, dbParams).FirstOrDefault();
+            return _context.Database.SqlQuery<int>(procedureName, dbParams).FirstOrDefault();
         }
 
         /// <summary>
@@ -317,9 +301,9 @@ namespace Highway.Data
             var parameters =
                 dbParams.Select(x => $"{x.ParameterName} : {x.Value} : {x.DbType}\t").ToArray();
 
-            _log.TraceFormat("Executing SQL {0}, with parameters {1}", sql, string.Join(",", parameters));
+            _context.Log.TraceFormat("Executing SQL {0}, with parameters {1}", sql, string.Join(",", parameters));
 
-            return Database.ExecuteSqlCommand(sql, dbParams);
+            return _context.Database.ExecuteSqlCommand(sql, dbParams);
         }
 
         /// <summary>
@@ -332,12 +316,7 @@ namespace Highway.Data
         /// <returns>An <see cref="IEnumerable{T}" /> from the query return</returns>
         public virtual IEnumerable<T> ExecuteSqlQuery<T>(string sql, params DbParameter[] dbParams)
         {
-            var parameters =
-                dbParams.Select(x => $"{x.ParameterName} : {x.Value} : {x.DbType}\t").ToArray();
-
-            _log.TraceFormat("Executing SQL {0}, with parameters {1}", sql, string.Join(",", parameters));
-
-            return Database.SqlQuery<T>(sql, dbParams);
+            return _context.ExecuteSqlQuery<T>(sql, dbParams);
         }
 
         /// <summary>
@@ -349,16 +328,16 @@ namespace Highway.Data
         public virtual T Reload<T>(T item)
             where T : class
         {
-            _log.TraceFormat("Retrieving State Entry For Object {0}", item);
+            _context.Log.TraceFormat("Retrieving State Entry For Object {0}", item);
             var entry = GetChangeTrackingEntry(item);
-            _log.DebugFormat("Reloading Object {0}", item);
+            _context.Log.DebugFormat("Reloading Object {0}", item);
             if (entry == null)
             {
                 throw new InvalidOperationException("You cannot reload an object that is not in the current Entity Framework data context");
             }
 
             entry.Reload();
-            _log.TraceFormat("Reloaded Object {0}", item);
+            _context.Log.TraceFormat("Reloaded Object {0}", item);
 
             return item;
         }
@@ -372,9 +351,9 @@ namespace Highway.Data
         public virtual T Remove<T>(T item)
             where T : class
         {
-            _log.DebugFormat("Removing Object {0}", item);
-            Set<T>().Remove(item);
-            _log.TraceFormat("Removed Object {0}", item);
+            _context.Log.DebugFormat("Removing Object {0}", item);
+            _context.Set<T>().Remove(item);
+            _context.Log.TraceFormat("Removed Object {0}", item);
 
             return item;
         }
@@ -388,16 +367,16 @@ namespace Highway.Data
         public virtual T Update<T>(T item)
             where T : class
         {
-            _log.TraceFormat("Retrieving State Entry For Object {0}", item);
+            _context.Log.TraceFormat("Retrieving State Entry For Object {0}", item);
             var entry = GetChangeTrackingEntry(item);
-            _log.DebugFormat("Updating Object {0}", item);
+            _context.Log.DebugFormat("Updating Object {0}", item);
             if (entry == null)
             {
                 throw new InvalidOperationException("Cannot Update an object that is not attacched to the current Entity Framework data context");
             }
 
             entry.State = EntityState.Modified;
-            _log.TraceFormat("Updated Object {0}", item);
+            _context.Log.TraceFormat("Updated Object {0}", item);
 
             return item;
         }
@@ -405,7 +384,7 @@ namespace Highway.Data
         protected virtual DbEntityEntry<T> GetChangeTrackingEntry<T>(T item)
             where T : class
         {
-            return Entry(item);
+            return _context.Entry(item);
         }
 
         protected void OnAfterSave()
@@ -416,39 +395,6 @@ namespace Highway.Data
         protected void OnBeforeSave()
         {
             BeforeSave?.Invoke(this, new BeforeSave());
-        }
-
-        /// <summary>
-        ///     This method is called when the model for a derived context has been initialized, but
-        ///     before the model has been locked down and used to initialize the context.  The default
-        ///     implementation of this method takes the <see cref="IMappingConfiguration" /> array passed in on construction and
-        ///     applies them.
-        ///     If no configuration mappings were passed it it does nothing.
-        /// </summary>
-        /// <remarks>
-        ///     Typically, this method is called only once when the first instance of a derived context
-        ///     is created.  The model for that context is then cached and is for all further instances of
-        ///     the context in the app domain.  This caching can be disabled by setting the ModelCaching
-        ///     property on the given ModelBuilder, but note that this can seriously degrade performance.
-        ///     More control over caching is provided through use of the DbModelBuilder and DbContextFactory
-        ///     classes directly.
-        /// </remarks>
-        /// <param name="modelBuilder">The builder that defines the model for the context being created</param>
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
-        {
-            if (_databaseFirst)
-            {
-                throw new UnintentionalCodeFirstException();
-            }
-
-            _log.Debug("\tOnModelCreating");
-            if (_mapping != null)
-            {
-                _log.TraceFormat("\t\tMapping : {0}", _mapping.GetType().Name);
-                _mapping.ConfigureModelBuilder(modelBuilder);
-            }
-
-            base.OnModelCreating(modelBuilder);
         }
     }
 }

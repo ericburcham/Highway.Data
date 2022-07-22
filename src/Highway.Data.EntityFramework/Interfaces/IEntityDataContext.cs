@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data.Common;
 
-namespace Highway.Data.EntityFramework
+namespace Highway.Data
 {
     public interface IEntityDataContext : IDataContext
     {
