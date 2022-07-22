@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
@@ -8,13 +9,13 @@ using Common.Logging;
 
 namespace Highway.Data
 {
-    public class DbContextBase : DbContext
+    public abstract class DbContextBase : DbContext, IDbModelCacheKeyProvider
     {
         private readonly bool _databaseFirst;
 
         private readonly IMappingConfiguration _mapping;
 
-        public DbContextBase(string connectionString, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
+        protected DbContextBase(string connectionString, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
             : base(connectionString)
         {
             Log = log;
@@ -23,14 +24,14 @@ namespace Highway.Data
             contextConfiguration?.ConfigureContext(this);
         }
 
-        public DbContextBase(string databaseFirstConnectionString, ILog log)
+        protected DbContextBase(string databaseFirstConnectionString, ILog log)
             : base(databaseFirstConnectionString)
         {
             _databaseFirst = true;
             Log = log;
         }
 
-        public DbContextBase(DbConnection dbConnection, bool contextOwnsConnection, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
+        protected DbContextBase(DbConnection dbConnection, bool contextOwnsConnection, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
             : base(dbConnection, contextOwnsConnection)
         {
             Log = log;
@@ -38,6 +39,8 @@ namespace Highway.Data
             Database.Log = Log.Debug;
             contextConfiguration?.ConfigureContext(this);
         }
+
+        public string CacheKey { get; set; } = string.Empty;
 
         protected internal ILog Log { get; }
 

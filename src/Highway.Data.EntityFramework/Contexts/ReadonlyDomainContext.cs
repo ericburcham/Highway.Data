@@ -11,12 +11,12 @@ namespace Highway.Data
         where T : class, IDomain
     {
         public ReadonlyDomainContext(T domain)
-            : base(domain.ConnectionString, domain.Mappings, domain.Context, new NoOpLogger())
+            : base(domain.ConnectionString, domain.Mappings, domain.Context, new NoOpLogger(), typeof(T).FullName)
         {
         }
 
         public ReadonlyDomainContext(T domain, ILog logger)
-            : base(domain.ConnectionString, domain.Mappings, domain.Context, logger)
+            : base(domain.ConnectionString, domain.Mappings, domain.Context, logger, typeof(T).FullName)
         {
         }
     }

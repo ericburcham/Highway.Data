@@ -15,7 +15,7 @@ namespace Highway.Data
         /// </summary>
         /// <param name="domain"></param>
         public DomainContext(T domain)
-            : base(domain.ConnectionString, domain.Mappings, domain.Context, new NoOpLogger())
+            : base(domain.ConnectionString, domain.Mappings, domain.Context, new NoOpLogger(), typeof(T).FullName)
         {
         }
 
@@ -25,7 +25,7 @@ namespace Highway.Data
         /// <param name="domain">domain for context</param>
         /// <param name="logger">logger</param>
         public DomainContext(T domain, ILog logger)
-            : base(domain.ConnectionString, domain.Mappings, domain.Context, logger)
+            : base(domain.ConnectionString, domain.Mappings, domain.Context, logger, typeof(T).FullName)
         {
         }
     }

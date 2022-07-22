@@ -11,7 +11,7 @@ using Common.Logging;
 
 namespace Highway.Data
 {
-    internal class ReadonlyDbContext : DbContextBase
+    public class ReadonlyDbContext : DbContextBase
     {
         public ReadonlyDbContext(string connectionString, IMappingConfiguration mapping, IContextConfiguration contextConfiguration, ILog log)
             : base(connectionString, mapping, contextConfiguration, log)

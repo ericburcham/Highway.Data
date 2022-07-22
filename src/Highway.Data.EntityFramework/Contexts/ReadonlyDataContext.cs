@@ -18,8 +18,9 @@ namespace Highway.Data
         /// </summary>
         /// <param name="connectionString">The standard SQL connection string for the Database</param>
         /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        public ReadonlyDataContext(string connectionString, IMappingConfiguration mapping)
-            : this(connectionString, mapping, new DefaultContextConfiguration(), new NoOpLogger())
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
+        public ReadonlyDataContext(string connectionString, IMappingConfiguration mapping, string cacheKey = null)
+            : this(connectionString, mapping, new DefaultContextConfiguration(), new NoOpLogger(), cacheKey)
         {
         }
 
@@ -29,8 +30,9 @@ namespace Highway.Data
         /// <param name="connectionString">The standard SQL connection string for the Database</param>
         /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
         /// <param name="log">The logger being supplied for this context ( Optional )</param>
-        public ReadonlyDataContext(string connectionString, IMappingConfiguration mapping, ILog log)
-            : this(connectionString, mapping, new DefaultContextConfiguration(), log)
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
+        public ReadonlyDataContext(string connectionString, IMappingConfiguration mapping, ILog log, string cacheKey = null)
+            : this(connectionString, mapping, new DefaultContextConfiguration(), log, cacheKey)
         {
         }
 
@@ -43,11 +45,13 @@ namespace Highway.Data
         ///     The context specific configuration that will change context level behavior (
         ///     Optional )
         /// </param>
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
         public ReadonlyDataContext(
             string connectionString,
             IMappingConfiguration mapping,
-            IContextConfiguration contextConfiguration)
-            : this(connectionString, mapping, contextConfiguration, new NoOpLogger())
+            IContextConfiguration contextConfiguration,
+            string cacheKey = null)
+            : this(connectionString, mapping, contextConfiguration, new NoOpLogger(), cacheKey)
         {
         }
 
@@ -58,13 +62,19 @@ namespace Highway.Data
         /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
         /// <param name="contextConfiguration">The context specific configuration that will change context level behavior</param>
         /// <param name="log">The logger being supplied for this context ( Optional )</param>
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
         public ReadonlyDataContext(
             string connectionString,
             IMappingConfiguration mapping,
             IContextConfiguration contextConfiguration,
-            ILog log)
+            ILog log,
+            string cacheKey = null)
         {
             _context = new ReadonlyDbContext(connectionString, mapping, contextConfiguration, log);
+            if (!cacheKey.IsNullOrEmpty())
+            {
+                _context.CacheKey = cacheKey;
+            }
         }
 
         /// <summary>
@@ -74,8 +84,9 @@ namespace Highway.Data
         ///     The metadata embedded connection string from database first Entity
         ///     Framework
         /// </param>
-        public ReadonlyDataContext(string databaseFirstConnectionString)
-            : this(databaseFirstConnectionString, new NoOpLogger())
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
+        public ReadonlyDataContext(string databaseFirstConnectionString, string cacheKey = null)
+            : this(databaseFirstConnectionString, new NoOpLogger(), cacheKey)
         {
         }
 
@@ -87,9 +98,14 @@ namespace Highway.Data
         ///     Framework
         /// </param>
         /// <param name="log">The logger for the database first context</param>
-        public ReadonlyDataContext(string databaseFirstConnectionString, ILog log)
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
+        public ReadonlyDataContext(string databaseFirstConnectionString, ILog log, string cacheKey = null)
         {
             _context = new ReadonlyDbContext(databaseFirstConnectionString, log);
+            if (!cacheKey.IsNullOrEmpty())
+            {
+                _context.CacheKey = cacheKey;
+            }
         }
 
         /// <summary>
@@ -98,8 +114,9 @@ namespace Highway.Data
         /// <param name="dbConnection">The db connection.</param>
         /// <param name="contextOwnsConnection">The context owns connection.</param>
         /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        public ReadonlyDataContext(DbConnection dbConnection, bool contextOwnsConnection, IMappingConfiguration mapping)
-            : this(dbConnection, contextOwnsConnection, mapping, new DefaultContextConfiguration(), new NoOpLogger())
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
+        public ReadonlyDataContext(DbConnection dbConnection, bool contextOwnsConnection, IMappingConfiguration mapping, string cacheKey = null)
+            : this(dbConnection, contextOwnsConnection, mapping, new DefaultContextConfiguration(), new NoOpLogger(), cacheKey)
         {
         }
 
@@ -110,12 +127,14 @@ namespace Highway.Data
         /// <param name="contextOwnsConnection">The context owns connection.</param>
         /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
         /// <param name="log">The logger being supplied for this context ( Optional )</param>
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
         public ReadonlyDataContext(
             DbConnection dbConnection,
             bool contextOwnsConnection,
             IMappingConfiguration mapping,
-            ILog log)
-            : this(dbConnection, contextOwnsConnection, mapping, new DefaultContextConfiguration(), log)
+            ILog log,
+            string cacheKey = null)
+            : this(dbConnection, contextOwnsConnection, mapping, new DefaultContextConfiguration(), log, cacheKey)
         {
         }
 
@@ -126,31 +145,39 @@ namespace Highway.Data
         /// <param name="contextOwnsConnection">The context owns connection.</param>
         /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
         /// <param name="contextConfiguration">The context specific configuration that will change context level behavior</param>
-        public ReadonlyDataContext(
-            DbConnection dbConnection,
-            bool contextOwnsConnection,
-            IMappingConfiguration mapping,
-            IContextConfiguration contextConfiguration)
-            : this(dbConnection, contextOwnsConnection, mapping, contextConfiguration, new NoOpLogger())
-        {
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="ReadonlyDataContext" /> class.
-        /// </summary>
-        /// <param name="dbConnection">The db connection.</param>
-        /// <param name="contextOwnsConnection">The context owns connection.</param>
-        /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
-        /// <param name="contextConfiguration">The context specific configuration that will change context level behavior</param>
-        /// <param name="log">The logger being supplied for this context ( Optional )</param>
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
         public ReadonlyDataContext(
             DbConnection dbConnection,
             bool contextOwnsConnection,
             IMappingConfiguration mapping,
             IContextConfiguration contextConfiguration,
-            ILog log)
+            string cacheKey = null)
+            : this(dbConnection, contextOwnsConnection, mapping, contextConfiguration, new NoOpLogger(), cacheKey)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ReadonlyDataContext" /> class.
+        /// </summary>
+        /// <param name="dbConnection">The db connection.</param>
+        /// <param name="contextOwnsConnection">The context owns connection.</param>
+        /// <param name="mapping">The Mapping Configuration that will determine how the tables and objects interact</param>
+        /// <param name="contextConfiguration">The context specific configuration that will change context level behavior</param>
+        /// <param name="log">The logger being supplied for this context ( Optional )</param>
+        /// <param name="cacheKey">The Cache Key used by the DbModelBuilder to determine if the private DbContext instance needs to invoke its OnModelCreating method.</param>
+        public ReadonlyDataContext(
+            DbConnection dbConnection,
+            bool contextOwnsConnection,
+            IMappingConfiguration mapping,
+            IContextConfiguration contextConfiguration,
+            ILog log,
+            string cacheKey = null)
         {
             _context = new ReadonlyDbContext(dbConnection, contextOwnsConnection, mapping, contextConfiguration, log);
+            if (!cacheKey.IsNullOrEmpty())
+            {
+                _context.CacheKey = cacheKey;
+            }
         }
 
         /// <summary>
